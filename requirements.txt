@@ -1,0 +1,13 @@
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+tensorflow
+jupyter
+notebook
+kagglehub
+joblib
+flask
+ultralytics
+opencv-python

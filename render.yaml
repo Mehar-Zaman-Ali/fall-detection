@@ -1,0 +1,18 @@
+# Render Blueprint — https://render.com/docs/infrastructure-as-code
+# After pushing this file, use Dashboard → New → Blueprint → connect repo.
+
+version: "1"
+
+services:
+  - type: web
+    name: fall-detection-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # TensorFlow + Ultralytics need RAM; free/starter may OOM — bump if deploy fails.
+    plan: standard
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"

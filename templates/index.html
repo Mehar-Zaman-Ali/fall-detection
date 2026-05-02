@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fall Detection AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 44px;
+            max-width: 660px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .header { text-align: center; margin-bottom: 32px; }
+
+        .header h1 {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            font-weight: 300;
+        }
+
+        /* ── Model Switcher ── */
+        .model-switcher {
+            display: flex;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 4px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .model-option {
+            flex: 1;
+            text-align: center;
+            padding: 12px 10px;
+            border-radius: 11px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .model-option .model-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.45);
+            transition: color 0.3s;
+        }
+
+        .model-option .model-desc {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.25);
+            margin-top: 2px;
+            transition: color 0.3s;
+        }
+
+        .model-option.active {
+            background: rgba(108, 99, 255, 0.2);
+            border: 1px solid rgba(108, 99, 255, 0.4);
+        }
+
+        .model-option.active .model-name { color: #a29bfe; }
+        .model-option.active .model-desc { color: rgba(162, 155, 254, 0.6); }
+
+        .model-option:not(.active):hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* ── Upload Zone ── */
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #6c63ff;
+            background: rgba(108, 99, 255, 0.08);
+        }
+
+        .upload-zone.has-image { padding: 16px; border-color: rgba(255, 255, 255, 0.15); }
+
+        .upload-icon {
+            width: 64px; height: 64px;
+            margin: 0 auto 16px;
+            background: rgba(108, 99, 255, 0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .upload-icon svg {
+            width: 28px; height: 28px;
+            stroke: #6c63ff; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .upload-text { color: rgba(255, 255, 255, 0.7); font-size: 15px; margin-bottom: 8px; }
+        .upload-text strong { color: #6c63ff; font-weight: 600; }
+        .upload-hint { color: rgba(255, 255, 255, 0.35); font-size: 12px; }
+
+        .upload-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer;
+        }
+
+        .preview-container {
+            display: none;
+            flex-direction: column; align-items: center; gap: 12px;
+        }
+
+        .preview-container img {
+            max-width: 100%; max-height: 320px;
+            border-radius: 12px; object-fit: contain;
+        }
+
+        .preview-name { color: rgba(255, 255, 255, 0.5); font-size: 13px; }
+
+        /* ── Buttons ── */
+        .btn {
+            display: block; width: 100%;
+            padding: 16px; margin-top: 20px;
+            border: none; border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6c63ff, #5a52d5);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(108, 99, 255, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(108, 99, 255, 0.45);
+        }
+
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 12px; box-shadow: none;
+        }
+
+        .btn-reset:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+        /* ── Results ── */
+        .result-card {
+            display: none;
+            margin-top: 24px;
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card.fall {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.1));
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .result-card.safe {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(39, 174, 96, 0.1));
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+
+        .result-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+
+        .result-card.fall .result-icon { background: rgba(231, 76, 60, 0.2); }
+        .result-card.safe .result-icon { background: rgba(46, 204, 113, 0.2); }
+
+        .result-label { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        .result-card.fall .result-label { color: #e74c3c; }
+        .result-card.safe .result-label { color: #2ecc71; }
+
+        .result-confidence { color: rgba(255, 255, 255, 0.5); font-size: 14px; }
+
+        .result-model-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .result-card.fall .result-model-badge {
+            background: rgba(231, 76, 60, 0.15);
+            color: rgba(231, 76, 60, 0.8);
+            border: 1px solid rgba(231, 76, 60, 0.25);
+        }
+
+        .result-card.safe .result-model-badge {
+            background: rgba(46, 204, 113, 0.15);
+            color: rgba(46, 204, 113, 0.8);
+            border: 1px solid rgba(46, 204, 113, 0.25);
+        }
+
+        .confidence-bar {
+            margin-top: 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px; height: 8px; overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%; border-radius: 8px;
+            transition: width 0.6s ease;
+        }
+
+        .result-card.fall .confidence-fill { background: #e74c3c; }
+        .result-card.safe .confidence-fill { background: #2ecc71; }
+
+        /* ── Pose Overlay ── */
+        .pose-overlay {
+            display: none;
+            margin-top: 18px;
+            text-align: center;
+        }
+
+        .pose-overlay img {
+            max-width: 100%;
+            max-height: 340px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pose-overlay .pose-label {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px;
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ── Spinner ── */
+        .spinner {
+            display: none;
+            width: 32px; height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #6c63ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-state {
+            display: none; text-align: center; margin-top: 24px;
+        }
+
+        .loading-state p {
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 12px; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fall Detection AI</h1>
+            <p>Upload one or more images (e.g. camera frames) to detect falls</p>
+        </div>
+
+        <!-- Model Switcher -->
+        <div class="model-switcher">
+            <div class="model-option active" data-model="cnn" onclick="selectModel('cnn')">
+                <div class="model-name">CNN (MobileNetV2)</div>
+                <div class="model-desc">Image classification</div>
+            </div>
+            <div class="model-option" data-model="yolo" onclick="selectModel('yolo')">
+                <div class="model-name">YOLOv8 + Pose</div>
+                <div class="model-desc">Skeleton-based detection</div>
+            </div>
+        </div>
+
+        <!-- Upload -->
+        <div class="upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" accept="image/*" multiple>
+            <div class="upload-placeholder" id="placeholder">
+                <div class="upload-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <p class="upload-text"><strong>Click to upload</strong> or drag and drop</p>
+                <p class="upload-hint">PNG, JPG, JPEG, WEBP — batch up to 64MB total</p>
+            </div>
+            <div class="preview-container" id="preview">
+                <img id="previewImg" src="" alt="Preview">
+                <span class="preview-name" id="previewName"></span>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" id="detectBtn" disabled>Detect Fall</button>
+
+        <div class="loading-state" id="loadingState">
+            <div class="spinner"></div>
+            <p id="loadingText">Analyzing image...</p>
+        </div>
+
+        <div class="result-card" id="resultCard">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-label" id="resultLabel"></div>
+            <div class="result-confidence" id="resultConf"></div>
+            <div class="confidence-bar">
+                <div class="confidence-fill" id="confFill"></div>
+            </div>
+            <div class="result-model-badge" id="modelBadge"></div>
+            <div id="batchDetail" style="display:none;margin-top:14px;font-size:12px;color:rgba(255,255,255,0.55);text-align:left;line-height:1.5;"></div>
+        </div>
+
+        <div class="pose-overlay" id="poseOverlay">
+            <img id="poseImg" src="" alt="Pose estimation">
+            <div class="pose-label">YOLOv8 Skeleton Overlay</div>
+        </div>
+
+        <button class="btn btn-reset" id="resetBtn" style="display:none;">Upload Another Image</button>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const placeholder = document.getElementById('placeholder');
+        const preview = document.getElementById('preview');
+        const previewImg = document.getElementById('previewImg');
+        const previewName = document.getElementById('previewName');
+        const detectBtn = document.getElementById('detectBtn');
+        const loadingState = document.getElementById('loadingState');
+        const loadingText = document.getElementById('loadingText');
+        const resultCard = document.getElementById('resultCard');
+        const poseOverlay = document.getElementById('poseOverlay');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let selectedFiles = [];
+        let selectedModel = 'cnn';
+
+        function selectModel(model) {
+            selectedModel = model;
+            document.querySelectorAll('.model-option').forEach(el => {
+                el.classList.toggle('active', el.dataset.model === model);
+            });
+        }
+
+        uploadZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+
+        uploadZone.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) handleFiles(fileInput.files);
+        });
+
+        function handleFiles(fileList) {
+            const imgs = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+            if (!imgs.length) return;
+            selectedFiles = imgs;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                previewImg.src = e.target.result;
+                previewName.textContent = imgs.length === 1
+                    ? imgs[0].name
+                    : `${imgs.length} images selected`;
+                placeholder.style.display = 'none';
+                preview.style.display = 'flex';
+                uploadZone.classList.add('has-image');
+                detectBtn.disabled = false;
+                resultCard.style.display = 'none';
+                poseOverlay.style.display = 'none';
+                resetBtn.style.display = 'none';
+                document.getElementById('batchDetail').style.display = 'none';
+            };
+            reader.readAsDataURL(imgs[0]);
+        }
+
+        detectBtn.addEventListener('click', async () => {
+            if (!selectedFiles.length) return;
+
+            detectBtn.disabled = true;
+            detectBtn.style.display = 'none';
+            loadingState.style.display = 'block';
+            loadingState.querySelector('.spinner').style.display = 'block';
+            const multi = selectedFiles.length > 1;
+            loadingText.textContent = multi
+                ? `Analyzing ${selectedFiles.length} frames...`
+                : (selectedModel === 'yolo'
+                    ? 'Running YOLOv8 pose estimation...'
+                    : 'Analyzing image with CNN...');
+            resultCard.style.display = 'none';
+            poseOverlay.style.display = 'none';
+            document.getElementById('batchDetail').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('model', selectedModel);
+            if (multi) {
+                selectedFiles.forEach(f => formData.append('files', f));
+                formData.append('aggregate', 'majority');
+            } else {
+                formData.append('file', selectedFiles[0]);
+            }
+
+            try {
+                const url = multi ? '/predict/batch' : '/predict';
+                const response = await fetch(url, { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                const badge = document.getElementById('modelBadge');
+                const batchEl = document.getElementById('batchDetail');
+
+                if (multi && data.aggregate) {
+                    const a = data.aggregate;
+                    const isFall = a.is_fall;
+                    resultCard.className = 'result-card ' + (isFall ? 'fall' : 'safe');
+                    document.getElementById('resultIcon').textContent = isFall ? '\u26A0' : '\u2713';
+                    document.getElementById('resultLabel').textContent = a.label;
+                    document.getElementById('resultConf').textContent =
+                        `Consensus: ${a.confidence.toFixed(1)}% (${a.frames_with_fall}/${a.total_frames} frames → fall) · mode: ${data.aggregate_mode}`;
+                    document.getElementById('confFill').style.width = Math.min(100, a.confidence) + '%';
+                    badge.textContent = (data.model === 'yolo' ? 'YOLOv8 + Pose + RF' : 'CNN') + ' · batch';
+
+                    const lines = (data.per_image || []).map((row, i) =>
+                        `#${i + 1} ${row.original_filename || ''}: ${row.label} (${row.confidence.toFixed(1)}%)`
+                    );
+                    batchEl.innerHTML = lines.length ? '<div style="opacity:0.9">Per frame:<br>' + lines.join('<br>') + '</div>' : '';
+                    batchEl.style.display = lines.length ? 'block' : 'none';
+
+                    resultCard.style.display = 'block';
+                    const firstPose = (data.per_image || []).find(r => r.pose_image_url);
+                    if (firstPose && firstPose.pose_image_url) {
+                        document.getElementById('poseImg').src = firstPose.pose_image_url + '?t=' + Date.now();
+                        poseOverlay.style.display = selectedModel === 'yolo' ? 'block' : 'none';
+                    } else {
+                        poseOverlay.style.display = 'none';
+                    }
+                } else {
+                    const isFall = data.is_fall;
+                    resultCard.className = 'result-card ' + (isFall ? 'fall' : 'safe');
+                    document.getElementById('resultIcon').textContent = isFall ? '\u26A0' : '\u2713';
+                    document.getElementById('resultLabel').textContent = data.label;
+                    document.getElementById('resultConf').textContent =
+                        `Confidence: ${data.confidence.toFixed(1)}%`;
+                    document.getElementById('confFill').style.width = data.confidence + '%';
+                    badge.textContent = data.model === 'yolo' ? 'YOLOv8 + Pose + RF' : 'CNN (MobileNetV2)';
+                    resultCard.style.display = 'block';
+                    batchEl.style.display = 'none';
+
+                    if (data.pose_image_url) {
+                        document.getElementById('poseImg').src = data.pose_image_url + '?t=' + Date.now();
+                        poseOverlay.style.display = 'block';
+                    } else {
+                        poseOverlay.style.display = 'none';
+                    }
+                }
+
+                resetBtn.style.display = 'block';
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                loadingState.style.display = 'none';
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            fileInput.value = '';
+            placeholder.style.display = '';
+            preview.style.display = 'none';
+            uploadZone.classList.remove('has-image');
+            detectBtn.disabled = true;
+            detectBtn.style.display = 'block';
+            resultCard.style.display = 'none';
+            poseOverlay.style.display = 'none';
+            resetBtn.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

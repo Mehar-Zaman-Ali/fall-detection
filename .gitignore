@@ -1,0 +1,10 @@
+.venv/
+.pip-cache/
+.tmp/
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.pytest_cache/
+.env
+.cursor/
