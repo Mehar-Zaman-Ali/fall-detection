@@ -1,6 +1,6 @@
 # Fly.io — https://fly.io/docs/reference/configuration/
-# Match "App name" in the Fly dashboard (change `app` if yours differs).
-app = "fall-detection-3xaxag"
+# Must match the Fly app name shown when you create/connect the app.
+app = "fall-detection-rb1rpw"
 primary_region = "iad"
 
 [build]
