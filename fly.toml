@@ -1,27 +1,30 @@
-# Fly.io — https://fly.io/docs/reference/configuration/
-# Must match the Fly app name shown when you create/connect the app.
-app = "fall-detection-iw7nww"
-primary_region = "ams"
+# fly.toml app configuration file generated for fall-detection-yvlv1a on 2026-05-03T07:47:03Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'fall-detection-yvlv1a'
+primary_region = 'sin'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
-[[http_service.checks]]
-  grace_period = "90s"
-  interval = "15s"
-  method = "GET"
-  timeout = "15s"
-  path = "/api/health"
+  [[http_service.checks]]
+    interval = '15s'
+    timeout = '15s'
+    grace_period = '1m30s'
+    method = 'GET'
+    path = '/api/health'
 
-# TensorFlow + Ultralytics need real RAM; raise to "4096mb" if you still OOM.
 [[vm]]
+  memory = '2048mb'
+  cpu_kind = 'shared'
   cpus = 1
-  cpu_kind = "shared"
-  memory = "2048mb"
+  memory_mb = 256
