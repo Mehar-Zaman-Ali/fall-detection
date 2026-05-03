@@ -1,0 +1,27 @@
+# Fly.io — https://fly.io/docs/reference/configuration/
+# Match "App name" in the Fly dashboard (change `app` if yours differs).
+app = "fall-detection-3xaxag"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  grace_period = "90s"
+  interval = "15s"
+  method = "GET"
+  timeout = "15s"
+  path = "/api/health"
+
+# TensorFlow + Ultralytics need real RAM; raise to "4096mb" if you still OOM.
+[[vm]]
+  cpus = 1
+  cpu_kind = "shared"
+  memory = "2048mb"

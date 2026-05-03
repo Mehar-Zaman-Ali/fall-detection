@@ -5,9 +5,6 @@ import numpy as np
 import cv2
 import joblib
 from flask import Flask, request, render_template, jsonify
-from tensorflow import keras
-from tensorflow.keras.utils import load_img, img_to_array
-from ultralytics import YOLO
 
 app = Flask(__name__)
 # Single-image UI uses modest limit; camera bursts use /predict/batch (raise if you send huge bursts).
@@ -36,6 +33,8 @@ FEATURE_COLS = [
 def get_cnn():
     global cnn_model
     if cnn_model is None:
+        from tensorflow import keras
+
         cnn_model = keras.models.load_model(CNN_MODEL_PATH)
         print(f"CNN model loaded from {CNN_MODEL_PATH}")
     return cnn_model
@@ -44,6 +43,8 @@ def get_cnn():
 def get_pose_models():
     global pose_yolo, pose_rf
     if pose_yolo is None:
+        from ultralytics import YOLO
+
         pose_yolo = YOLO("yolov8n-pose.pt")
         print("YOLOv8-pose model loaded")
     if pose_rf is None:
@@ -59,6 +60,8 @@ def allowed_file(filename):
 # ── CNN prediction ──────────────────────────────────────────────────────────
 
 def predict_cnn(filepath):
+    from tensorflow.keras.utils import img_to_array, load_img
+
     img = load_img(filepath, target_size=(IMG_SIZE, IMG_SIZE))
     img_array = img_to_array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
