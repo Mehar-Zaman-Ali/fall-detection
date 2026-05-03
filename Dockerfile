@@ -20,10 +20,9 @@ COPY . .
 RUN chmod +x docker/start.sh
 
 ENV PYTHONUNBUFFERED=1
-# Render overrides PORT at runtime; process must bind to that port (not a fixed 5000).
-ENV PORT=5000
+# Fly.io / Render set PORT at runtime (Fly matches internal_port, often 8080). Do not pin PORT here.
 
-EXPOSE 5000
+EXPOSE 8080
 
-# One worker: models stay loaded in memory (multiple workers = multiple copies of TF/YOLO).
-CMD ["docker/start.sh"]
+# Exec form must use an absolute path — `docker/start.sh` is not found via PATH.
+CMD ["/app/docker/start.sh"]

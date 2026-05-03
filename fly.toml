@@ -1,6 +1,7 @@
 # Fly.io — https://fly.io/docs/reference/configuration/
 # Must match the Fly app name shown when you create/connect the app.
-app = "fall-detection-iw7nww"
+# Set `app` to your Fly app name (Dashboard → app name), or run: fly config save -a YOUR_APP
+app = "fall-detection-yvlv1a"
 primary_region = "ams"
 
 [build]
@@ -14,7 +15,8 @@ primary_region = "ams"
   min_machines_running = 0
 
 [[http_service.checks]]
-  grace_period = "90s"
+  # Fly warns if > 1m; keep at or under 60s
+  grace_period = "60s"
   interval = "15s"
   method = "GET"
   timeout = "15s"

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
-# Render injects PORT; must listen on 0.0.0.0:$PORT — see https://render.com/docs/web-services#port-binding
+# Fly.io / Render set PORT; bind 0.0.0.0:$PORT (Fly matches fly.toml internal_port, e.g. 8080).
 set -e
-PORT="${PORT:-5000}"
+PORT="${PORT:-8080}"
 export PORT
 echo "[start] PORT=${PORT} binding 0.0.0.0:${PORT}"
 exec gunicorn app:app \
