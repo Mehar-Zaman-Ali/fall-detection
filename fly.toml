@@ -1,7 +1,7 @@
 # Fly.io — https://fly.io/docs/reference/configuration/
 # Must match the Fly app name shown when you create/connect the app.
-app = "fall-detection-rb1rpw"
-primary_region = "iad"
+app = "fall-detection-iw7nww"
+primary_region = "ams"
 
 [build]
   dockerfile = "Dockerfile"
