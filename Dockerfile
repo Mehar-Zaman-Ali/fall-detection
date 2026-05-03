@@ -17,8 +17,13 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 COPY . .
 
+RUN chmod +x docker/start.sh
+
 ENV PYTHONUNBUFFERED=1
+# Render overrides PORT at runtime; process must bind to that port (not a fixed 5000).
+ENV PORT=5000
+
 EXPOSE 5000
 
 # One worker: models stay loaded in memory (multiple workers = multiple copies of TF/YOLO).
-CMD ["sh", "-c", "exec gunicorn app:app --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 1 --timeout 300 --access-logfile - --error-logfile -"]
+CMD ["docker/start.sh"]
